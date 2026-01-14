@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alkimi Agentic Platform - Naming Poll</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes fall {
+      to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+      50% { box-shadow: 0 0 40px rgba(168, 85, 247, 0.8); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    .float-animation { animation: float 3s ease-in-out infinite; }
+    .pulse-glow { animation: pulse-glow 2s infinite; }
+    .confetti { animation: fall 3s linear forwards; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+  <div id="app" class="p-4 md:p-6 font-sans">
+    
+    <!-- Loading State -->
+    <div id="loading" class="min-h-screen flex items-center justify-center">
+      <div class="text-center">
+        <div class="text-6xl mb-4 animate-spin">🔄</div>
+        <p class="text-white text-xl">Loading poll...</p>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="max-w-4xl mx-auto hidden">
+      
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div class="inline-block mb-4">
+          <span class="text-5xl md:text-6xl float-animation">🤖</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">
+          Name Our <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Agentic Platform</span>
+        </h1>
+        <p class="text-slate-300 text-lg">Cast your vote and shape Alkimi's AI future!</p>
+        <div class="mt-4 flex flex-wrap justify-center gap-3">
+          <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+            <span class="text-purple-300">Total votes:</span>
+            <span id="total-votes" class="text-white font-bold text-xl">0</span>
+            <span class="text-green-400 text-xs ml-2">● Live</span>
+          </div>
+          <div id="custom-count-badge" class="hidden inline-flex items-center gap-2 bg-green-500/20 backdrop-blur-sm px-4 py-2 rounded-full">
+            <span class="text-green-300">Community ideas:</span>
+            <span id="custom-count" class="text-white font-bold">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Voting Grid -->
+      <div id="voting-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4"></div>
+
+      <!-- Thank You Message -->
+      <div id="thank-you" class="mt-8 text-center hidden">
+        <div class="inline-block bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30">
+          <p class="text-2xl mb-2">🎉 Thanks for voting!</p>
+          <p class="text-slate-300">
+            You voted for <span id="your-vote" class="text-purple-400 font-bold"></span>
+          </p>
+          <p id="voter-count-msg" class="text-slate-400 text-sm mt-2"></p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-10 text-center text-slate-500 text-sm">
+        <p>🚀 Alkimi Agentic Platform Naming Competition</p>
+        <p class="mt-1">May the best name win!</p>
+      </div>
+    </div>
+
+    <!-- Vote Modal -->
+    <div id="vote-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 p-4 hidden">
+      <div class="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-purple-500/30 shadow-2xl">
+        <h3 class="text-2xl font-bold text-white mb-2">Cast Your Vote</h3>
+        <p class="text-slate-300 mb-6">
+          Voting for <span id="pending-vote-name" class="text-purple-400 font-bold"></span>
+        </p>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-slate-300 text-sm mb-2">Your Name (optional)</label>
+            <input type="text" id="voter-name" placeholder="Enter your name"
+              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-purple-500" />
+          </div>
+          
+          <div>
+            <label class="block text-slate-300 text-sm mb-2">Work Email *</label>
+            <input type="email" id="voter-email" placeholder="you@alkimi.org"
+              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-purple-500" />
+            <p class="text-slate-500 text-xs mt-1">Used to prevent duplicate votes</p>
+          </div>
+          
+          <div id="vote-error" class="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-300 text-sm hidden"></div>
+          
+          <div class="flex gap-3 pt-2">
+            <button onclick="closeVoteModal()" class="flex-1 px-4 py-3 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition-colors">
+              Cancel
+            </button>
+            <button id="submit-vote-btn" onclick="submitVote()"
+              class="flex-1 px-4 py-3 rounded-lg font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 transition-all">
+              🗳️ Submit Vote
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Custom Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 p-4 hidden">
+      <div class="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-green-500/30 shadow-2xl">
+        <h3 class="text-2xl font-bold text-white mb-2">💡 Suggest a Name</h3>
+        <p class="text-slate-300 mb-6">Add your own idea! Your vote will automatically count for it.</p>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-slate-300 text-sm mb-2">Platform Name *</label>
+            <input type="text" id="custom-name" placeholder="Your brilliant name idea" maxlength="30"
+              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-green-500" />
+          </div>
+
+          <div>
+            <label class="block text-slate-300 text-sm mb-2">Tagline (optional)</label>
+            <input type="text" id="custom-tagline" placeholder="A short catchy tagline" maxlength="40"
+              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-green-500" />
+          </div>
+
+          <hr class="border-slate-600" />
+          
+          <div>
+            <label class="block text-slate-300 text-sm mb-2">Your Name (optional)</label>
+            <input type="text" id="custom-voter-name" placeholder="Enter your name"
+              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-green-500" />
+          </div>
+          
+          <div>
+            <label class="block text-slate-300 text-sm mb-2">Work Email *</label>
+            <input type="email" id="custom-voter-email" placeholder="you@alkimi.org"
+              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-green-500" />
+          </div>
+          
+          <div id="custom-error" class="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-300 text-sm hidden"></div>
+          
+          <div class="flex gap-3 pt-2">
+            <button onclick="closeCustomModal()" class="flex-1 px-4 py-3 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition-colors">
+              Cancel
+            </button>
+            <button id="submit-custom-btn" onclick="submitCustom()"
+              class="flex-1 px-4 py-3 rounded-lg font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:opacity-90 transition-all">
+              ✨ Add & Vote
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confetti Container -->
+    <div id="confetti-container" class="fixed inset-0 pointer-events-none overflow-hidden z-50"></div>
+  </div>
+
+  <script>
+    // ⚠️ REPLACE THIS with your deployed Google Apps Script Web App URL
+    const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+
+    const defaultOptions = [
+      { name: 'Anvil', emoji: '🔨', tagline: 'Forged for strength' },
+      { name: 'Walnut', emoji: '🌰', tagline: 'Small but mighty' },
+      { name: 'Alice', emoji: '🐇', tagline: 'Down the rabbit hole' },
+      { name: 'Basalt', emoji: '🪨', tagline: 'Solid foundation' },
+      { name: 'Alexis Apex', emoji: '🏔️', tagline: 'Peak performance' },
+      { name: 'Helix', emoji: '🧬', tagline: 'Evolved intelligence' },
+      { name: 'Nexus', emoji: '🔗', tagline: 'Connected everything' },
+      { name: 'Alma', emoji: '💫', tagline: 'Soul of automation' },
+      { name: 'Kimi', emoji: '⚡', tagline: 'Speed & precision' },
+      { name: 'AgentKemp', emoji: '🤖', tagline: 'Your AI ally' },
+      { name: 'Guru', emoji: '🧙', tagline: 'Wisdom on demand' },
+      { name: 'Jeff', emoji: '👋', tagline: "Just Jeff. That's it." },
+    ];
+
+    let votes = {};
+    let customOptions = [];
+    let totalVotes = 0;
+    let hasVoted = false;
+    let selectedName = null;
+    let pendingVote = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', init);
+
+    async function init() {
+      const savedEmail = localStorage.getItem('alkimi_poll_email');
+      const savedVote = localStorage.getItem('alkimi_poll_vote');
+      
+      await fetchData();
+      
+      if (savedEmail && savedVote) {
+        hasVoted = true;
+        selectedName = savedVote;
+      }
+      
+      renderGrid();
+      
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('main-content').classList.remove('hidden');
+      
+      // Poll for updates every 30 seconds
+      setInterval(fetchData, 30000);
+    }
+
+    async function fetchData() {
+      try {
+        const response = await fetch(GOOGLE_SCRIPT_URL);
+        const data = await response.json();
+        if (data.success) {
+          votes = data.votes || {};
+          customOptions = data.customOptions || [];
+          totalVotes = data.totalVotes || 0;
+          
+          document.getElementById('total-votes').textContent = totalVotes;
+          
+          if (customOptions.length > 0) {
+            document.getElementById('custom-count-badge').classList.remove('hidden');
+            document.getElementById('custom-count').textContent = customOptions.length;
+          }
+          
+          if (hasVoted) renderGrid();
+        }
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+      }
+    }
+
+    function getAllOptions() {
+      return [...defaultOptions, ...customOptions];
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('voting-grid');
+      let allOptions = getAllOptions();
+      
+      if (hasVoted) {
+        allOptions.sort((a, b) => (votes[b.name] || 0) - (votes[a.name] || 0));
+      }
+      
+      let html = allOptions.map((option, index) => {
+        const isSelected = selectedName === option.name;
+        const percentage = totalVotes > 0 ? Math.round(((votes[option.name] || 0) / totalVotes) * 100) : 0;
+        const voteCount = votes[option.name] || 0;
+        const isCustom = option.isCustom;
+        
+        return `
+          <button
+            onclick="handleVoteClick('${option.name.replace(/'/g, "\\'")}')"
+            ${hasVoted ? 'disabled' : ''}
+            class="relative overflow-hidden rounded-2xl p-4 md:p-5 transition-all duration-300 text-left
+              ${isSelected ? 'bg-gradient-to-br from-purple-500 to-pink-500 scale-105 pulse-glow' : 
+                isCustom ? 'bg-green-500/20 hover:bg-green-500/30 border border-green-500/30' : 
+                'bg-white/10 hover:bg-white/20'}
+              ${hasVoted && !isSelected ? 'opacity-70' : ''}
+              ${!hasVoted ? 'cursor-pointer hover:shadow-lg hover:shadow-purple-500/25' : 'cursor-default'}"
+          >
+            ${hasVoted ? `<div class="absolute inset-0 bg-gradient-to-r from-purple-500/30 to-pink-500/30 transition-all duration-1000" style="width: ${percentage}%"></div>` : ''}
+            
+            <div class="relative z-10">
+              <div class="flex items-start justify-between mb-2">
+                <span class="text-2xl md:text-3xl">${option.emoji}</span>
+                ${isCustom && !isSelected ? '<span class="text-xs bg-green-500/30 text-green-300 px-2 py-0.5 rounded-full">NEW</span>' : ''}
+              </div>
+              <h3 class="text-white font-bold text-base md:text-lg mb-1">${option.name}</h3>
+              <p class="text-slate-300 text-xs">${option.tagline}</p>
+              ${isCustom && option.submittedBy ? `<p class="text-slate-500 text-xs mt-1">by ${option.submittedBy}</p>` : ''}
+              
+              ${hasVoted ? `
+                <div class="mt-3 flex items-center justify-between">
+                  <span class="text-white/80 text-sm">${voteCount} vote${voteCount !== 1 ? 's' : ''}</span>
+                  <span class="text-white font-bold">${percentage}%</span>
+                </div>
+              ` : ''}
+            </div>
+
+            ${isSelected ? `
+              <div class="absolute top-2 right-2 bg-white rounded-full p-1">
+                <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            ` : ''}
+            
+            ${hasVoted && index < 3 ? `
+              <div class="absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                index === 0 ? 'bg-yellow-500 text-yellow-900' :
+                index === 1 ? 'bg-slate-300 text-slate-700' :
+                'bg-amber-600 text-amber-100'
+              }">
+                ${index + 1}
+              </div>
+            ` : ''}
+          </button>
+        `;
+      }).join('');
+      
+      // Add "Add Your Own" card if not voted
+      if (!hasVoted) {
+        html += `
+          <button onclick="openCustomModal()"
+            class="relative overflow-hidden rounded-2xl p-4 md:p-5 transition-all duration-300 text-left
+              bg-gradient-to-br from-green-500/20 to-emerald-500/20 hover:from-green-500/30 hover:to-emerald-500/30
+              border-2 border-dashed border-green-500/50 hover:border-green-400
+              cursor-pointer hover:shadow-lg hover:shadow-green-500/25">
+            <div class="relative z-10">
+              <span class="text-2xl md:text-3xl mb-2 block">➕</span>
+              <h3 class="text-white font-bold text-base md:text-lg mb-1">Add Your Own</h3>
+              <p class="text-green-300 text-xs">Got a better idea? Submit it!</p>
+            </div>
+          </button>
+        `;
+      }
+      
+      grid.innerHTML = html;
+      
+      if (hasVoted) {
+        document.getElementById('thank-you').classList.remove('hidden');
+        document.getElementById('your-vote').textContent = selectedName;
+        const voterCount = Object.values(votes).reduce((a, b) => a + b, 0);
+        document.getElementById('voter-count-msg').textContent = `${voterCount} team member${voterCount !== 1 ? 's have' : ' has'} voted`;
+      }
+    }
+
+    function handleVoteClick(name) {
+      if (hasVoted) return;
+      pendingVote = name;
+      document.getElementById('pending-vote-name').textContent = name;
+      document.getElementById('vote-modal').classList.remove('hidden');
+    }
+
+    function closeVoteModal() {
+      document.getElementById('vote-modal').classList.add('hidden');
+      document.getElementById('vote-error').classList.add('hidden');
+      pendingVote = null;
+    }
+
+    function openCustomModal() {
+      document.getElementById('custom-modal').classList.remove('hidden');
+    }
+
+    function closeCustomModal() {
+      document.getElementById('custom-modal').classList.add('hidden');
+      document.getElementById('custom-error').classList.add('hidden');
+      document.getElementById('custom-name').value = '';
+      document.getElementById('custom-tagline').value = '';
+    }
+
+    async function submitVote() {
+      const voterName = document.getElementById('voter-name').value;
+      const voterEmail = document.getElementById('voter-email').value.toLowerCase().trim();
+      
+      if (!voterEmail) {
+        showError('vote-error', 'Please enter your email');
+        return;
+      }
+      
+      const btn = document.getElementById('submit-vote-btn');
+      btn.textContent = '🔄 Submitting...';
+      btn.disabled = true;
+      
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: pendingVote,
+            voter: voterName || 'Anonymous',
+            email: voterEmail,
+          }),
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        localStorage.setItem('alkimi_poll_email', voterEmail);
+        localStorage.setItem('alkimi_poll_vote', pendingVote);
+        
+        hasVoted = true;
+        selectedName = pendingVote;
+        
+        closeVoteModal();
+        await fetchData();
+        renderGrid();
+        showConfetti();
+        
+      } catch (err) {
+        showError('vote-error', 'Failed to submit. Please try again.');
+      } finally {
+        btn.textContent = '🗳️ Submit Vote';
+        btn.disabled = false;
+      }
+    }
+
+    async function submitCustom() {
+      const customName = document.getElementById('custom-name').value.trim();
+      const customTagline = document.getElementById('custom-tagline').value.trim();
+      const voterName = document.getElementById('custom-voter-name').value;
+      const voterEmail = document.getElementById('custom-voter-email').value.toLowerCase().trim();
+      
+      if (!customName) {
+        showError('custom-error', 'Please enter a name');
+        return;
+      }
+      
+      if (!voterEmail) {
+        showError('custom-error', 'Please enter your email');
+        return;
+      }
+      
+      // Check if name exists
+      const allNames = getAllOptions().map(o => o.name.toLowerCase());
+      if (allNames.includes(customName.toLowerCase())) {
+        showError('custom-error', 'This name already exists! Vote for it instead.');
+        return;
+      }
+      
+      const btn = document.getElementById('submit-custom-btn');
+      btn.textContent = '🔄 Submitting...';
+      btn.disabled = true;
+      
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'addCustom',
+            customName: customName,
+            customTagline: customTagline || 'Community suggestion',
+            voter: voterName || 'Anonymous',
+            email: voterEmail,
+          }),
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        localStorage.setItem('alkimi_poll_email', voterEmail);
+        localStorage.setItem('alkimi_poll_vote', customName);
+        
+        hasVoted = true;
+        selectedName = customName;
+        
+        closeCustomModal();
+        await fetchData();
+        renderGrid();
+        showConfetti();
+        
+      } catch (err) {
+        showError('custom-error', 'Failed to submit. Please try again.');
+      } finally {
+        btn.textContent = '✨ Add & Vote';
+        btn.disabled = false;
+      }
+    }
+
+    function showError(elementId, message) {
+      const el = document.getElementById(elementId);
+      el.textContent = message;
+      el.classList.remove('hidden');
+    }
+
+    function showConfetti() {
+      const container = document.getElementById('confetti-container');
+      const emojis = ['🎉', '⭐', '🚀', '✨', '🎊'];
+      
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'absolute confetti';
+        confetti.style.left = `${Math.random() * 100}%`;
+        confetti.style.top = '-20px';
+        confetti.style.fontSize = '24px';
+        confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+        confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
+        confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        container.appendChild(confetti);
+      }
+      
+      setTimeout(() => { container.innerHTML = ''; }, 4000);
+    }
+  </script>
+</body>
+</html>
